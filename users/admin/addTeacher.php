@@ -1,6 +1,13 @@
 <?php
 include '../../config.php';
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+// Tiyakin na ang path na ito ay tama para sa iyong setup
+require './../../mailer/src/Exception.php';
+require './../../mailer/src/PHPMailer.php';
+require './../../mailer/src/SMTP.php';
 
 if (isset($_POST['submit_teacher'])) {
     $teacher_ids = $_POST['teacher_id'];
@@ -9,6 +16,7 @@ if (isset($_POST['submit_teacher'])) {
     $last_names = $_POST['last_name'];
     $specializations = $_POST['specialization'];
     $degrees = $_POST['degree'];
+    $positions = $_POST['position'];
 
     $exts = $_POST['ext'] ?? [];
     $emails = $_POST['email'];
@@ -18,9 +26,12 @@ if (isset($_POST['submit_teacher'])) {
 
     $target_dir = "./teacher_profile/"; // make sure this folder exists and is writable
 
+    $added_count = 0; // Track how many were successfully added
+
     foreach ($teacher_ids as $index => $teacher_id) {
         $specialization = strtoupper(trim($specializations[$index]));
         $degree = strtoupper(trim($degrees[$index]));
+        $position = strtoupper(trim($positions[$index]));
 
         $first_name = strtoupper(trim($first_names[$index]));
         $middle_name = strtoupper(trim($middle_names[$index]));
@@ -28,11 +39,11 @@ if (isset($_POST['submit_teacher'])) {
         $extenstion_name = isset($exts[$index]) ? strtoupper(trim($exts[$index])) : '';
         $email = trim($emails[$index]);
 
-        $teacher_name = $first_name . ' ' . $middle_name . ' ' . $last_name . ' ' . $extenstion_name;
+        $teacher_name = trim("$first_name $middle_name $last_name $extenstion_name");
         $teacher_type = $teacher_types[$index];
-        $grade = $grades[$index] ?? null;
-        $section = $sections[$index] ?? null;
-        // $password = $teacher_id;
+        $grade = !empty($grades[$index]) ? $grades[$index] : null;
+        $section = !empty($sections[$index]) ? $sections[$index] : null;
+
         $password = 'Password123';
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
@@ -55,7 +66,7 @@ if (isset($_POST['submit_teacher'])) {
         }
 
         // If adviser, check if another adviser exists
-        if ($teacher_type === 'Class Adviser') {
+        if ($teacher_type === 'Class Adviser' && $grade && $section) {
             $check_adviser = "SELECT * FROM teacher_tbl 
                               WHERE teacher_type = 'Class Adviser' 
                               AND grade_level = '$grade' 
@@ -68,7 +79,7 @@ if (isset($_POST['submit_teacher'])) {
 
         // Insert
         $insert_query = "INSERT INTO teacher_tbl 
-                        (teacher_id, teacher_name, teacher_type, grade_level, section_id, password, profile, first_name, middle_name, last_name, ext, email, specialization,degree)
+                        (teacher_id, teacher_name, teacher_type, grade_level, section_id, password, profile, first_name, middle_name, last_name, ext, email, specialization, degree, position)
                         VALUES (
                             '$teacher_id', '$teacher_name', '$teacher_type',
                             " . ($grade ? "'$grade'" : "NULL") . ",
@@ -76,36 +87,94 @@ if (isset($_POST['submit_teacher'])) {
                             '$hashed_password', '$new_filename',
                             '$first_name','$middle_name','$last_name',
                             " . ($extenstion_name ? "'$extenstion_name'" : "NULL") . ",
-                            '$email', '$specialization', '$degree'
+                            '$email', '$specialization', '$degree', '$position'
                         )";
-        mysqli_query($conn, $insert_query);
+
+        if (mysqli_query($conn, $insert_query)) {
+            $added_count++;
+
+            // ================= EMAIL SENDING LOGIC =================
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = 'highschoolbangbangnational@gmail.com'; // Your email
+                $mail->Password = 'njdvqtbzbgtppobe'; // Your app password
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                $mail->Port = 465;
+
+                $mail->setFrom('highschoolbangbangnational@gmail.com', 'Bangbang National High School');
+                $mail->addAddress($email);
+                $mail->isHTML(true);
+                $mail->Subject = 'Welcome to Bangbang National High School!';
+
+                $mail->Body = "
+                 <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px;'>
+                     <h2 style='color: #4e73df; text-align: center;'>Welcome to Bangbang National High School</h2>
+                     <p>Dear <strong>$teacher_name</strong>,</p>
+                     <p>Your account has been successfully created. Below are your account details:</p>
+                     <table style='width: 100%; border-collapse: collapse; margin-top: 15px;'>
+                         <tr>
+                             <td style='padding: 8px; border: 1px solid #ddd; background-color: #f8f9fc; width: 30%; font-weight: bold;'>Teacher ID:</td>
+                             <td style='padding: 8px; border: 1px solid #ddd;'>$teacher_id</td>
+                         </tr>
+                         <tr>
+                             <td style='padding: 8px; border: 1px solid #ddd; background-color: #f8f9fc; font-weight: bold;'>Role/Type:</td>
+                             <td style='padding: 8px; border: 1px solid #ddd;'>$teacher_type</td>
+                         </tr>
+                         <tr>
+                             <td style='padding: 8px; border: 1px solid #ddd; background-color: #f8f9fc; font-weight: bold;'>Position:</td>
+                             <td style='padding: 8px; border: 1px solid #ddd;'>$position</td>
+                         </tr>
+                         <tr>
+                             <td style='padding: 8px; border: 1px solid #ddd; background-color: #f8f9fc; font-weight: bold;'>Default Password:</td>
+                             <td style='padding: 8px; border: 1px solid #ddd;'><strong>$password</strong></td>
+                         </tr>
+                     </table>
+                     <p style='margin-top: 20px;'>Please log in and change your password immediately for security purposes.</p>
+                     <br>
+                     <p>Best Regards,</p>
+                     <p><strong>GMS Admin</strong></p>
+                 </div>";
+
+                $mail->send();
+            } catch (Exception $e) {
+                // Log error or silently continue if email fails but DB insert succeeds
+                error_log("Failed to send email to $email. Mailer Error: {$mail->ErrorInfo}");
+            }
+            // ========================================================
+        }
     }
 
-    echo '<script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const Toast = Swal.mixin({
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: 2000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener("mouseenter", Swal.stopTimer)
-                    toast.addEventListener("mouseleave", Swal.resumeTimer)
-                }
+    if ($added_count > 0) {
+        echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: 'Success!',
+                    text: '$added_count Teacher(s) added successfully. Confirmation emails sent.',
+                    icon: 'success',
+                    confirmButtonText: 'Okay'
+                }).then(() => {
+                    window.location.href = 'teacher'; 
+                });
             });
-
-            Toast.fire({
-                icon: "success",
-                title: "Teachers processed successfully!"
+        </script>";
+    } else {
+        echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: 'Notice',
+                    text: 'No teachers were added. They might be duplicates or image upload failed.',
+                    icon: 'info',
+                    confirmButtonText: 'Okay'
+                });
             });
-        });
-    </script>';
+        </script>";
+    }
 }
-
-
-
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -117,7 +186,7 @@ if (isset($_POST['submit_teacher'])) {
         <div id="content-wrapper" class="d-flex flex-column">
             <div id="content">
                 <?php include './../template/navbar.php'; ?>
-                <div class="container-fluid  ">
+                <div class="container-fluid">
                     <div class="card shadow mb-4">
                         <div class="card-header py-3">
                             <h6 class="m-0 font-weight-bold text-primary">Add Teacher -
@@ -125,36 +194,42 @@ if (isset($_POST['submit_teacher'])) {
                             </h6>
                         </div>
                         <div class="card-body">
-                            <form method="POST" autocomplete="off" id="teacherForm" onsubmit="return validateTeacherIDs()" enctype="multipart/form-data">
+                            <form method="POST" autocomplete="off" id="teacherForm"
+                                onsubmit="return validateTeacherIDs()" enctype="multipart/form-data">
                                 <div id="teacherFields">
-                                    <div class="row teacher-entry  ">
+                                    <div class="row teacher-entry">
                                         <div class="col-md-2 mb-3">
                                             <label>Teacher ID <span class="text-danger">*</span></label>
                                             <input type="text" name="teacher_id[]" class="form-control" required>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label>First Name <span class="text-danger">*</span></label>
-                                            <input type="text" name="first_name[]" class="form-control" required oninput="this.value = this.value.toUpperCase();">
+                                            <input type="text" name="first_name[]" class="form-control" required
+                                                oninput="this.value = this.value.toUpperCase();">
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label>Middle Name <span class="text-danger">*</span></label>
-                                            <input type="text" name="middle_name[]" class="form-control" required oninput="this.value = this.value.toUpperCase();">
+                                            <input type="text" name="middle_name[]" class="form-control" required
+                                                oninput="this.value = this.value.toUpperCase();">
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label>Last Name <span class="text-danger">*</span></label>
-                                            <input type="text" name="last_name[]" class="form-control" required oninput="this.value = this.value.toUpperCase();">
+                                            <input type="text" name="last_name[]" class="form-control" required
+                                                oninput="this.value = this.value.toUpperCase();">
                                         </div>
-                                        <div class="col-md-1  mb-3">
+                                        <div class="col-md-1 mb-3">
                                             <label>Ext <span class="text-danger">*</span></label>
-                                            <input type="text" name="ext[]" class="form-control" oninput="this.value = this.value.toUpperCase();">
+                                            <input type="text" name="ext[]" class="form-control"
+                                                oninput="this.value = this.value.toUpperCase();">
                                         </div>
-                                        <div class="col-md-3  mb-3">
+                                        <div class="col-md-3 mb-3">
                                             <label>Email <span class="text-danger">*</span></label>
-                                            <input type="text" name="email[]" class="form-control" required>
+                                            <input type="email" name="email[]" class="form-control" required>
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label>Profile <span class="text-danger">*</span></label>
-                                            <input type="file" name="profile[]" class="form-control" required accept="image/*">
+                                            <input type="file" name="profile[]" class="form-control" required
+                                                accept="image/*">
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label>Teacher Type <span class="text-danger">*</span></label>
@@ -166,16 +241,26 @@ if (isset($_POST['submit_teacher'])) {
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label>Degree <span class="text-danger">*</span></label>
-                                            <input type="text" name="degree[]" class="form-control" required oninput="this.value = this.value.toUpperCase();">
+                                            <input type="text" name="degree[]" class="form-control" required
+                                                oninput="this.value = this.value.toUpperCase();">
                                         </div>
                                         <div class="col-md-3 mb-3">
                                             <label>Specialization <span class="text-danger">*</span></label>
-                                            <input type="text" name="specialization[]" class="form-control" required oninput="this.value = this.value.toUpperCase();">
+                                            <input type="text" name="specialization[]" class="form-control" required
+                                                oninput="this.value = this.value.toUpperCase();">
                                         </div>
 
-                                        <div class="col-md-1 mb-3  ">
-                                            <label class="text-white">Remove </label>
-                                            <button type="button" class="btn btn-danger     remove-btn" style="display: none;" onclick="removeTeacherRow(this)">
+                                        <div class="col-md-3 mb-3">
+                                            <label>Position <span class="text-danger">*</span></label>
+                                            <input type="text" name="position[]" class="form-control" required
+                                                oninput="this.value = this.value.toUpperCase();"
+                                                placeholder="e.g. Teacher I">
+                                        </div>
+
+                                        <div class="col-md-2 mb-3">
+                                            <label class="text-white d-block">Remove </label>
+                                            <button type="button" class="btn btn-danger remove-btn"
+                                                style="display: none;" onclick="removeTeacherRow(this)">
                                                 Remove
                                             </button>
                                         </div>
@@ -194,22 +279,17 @@ if (isset($_POST['submit_teacher'])) {
                                                 <option value="" selected disabled>Select Section</option>
                                             </select>
                                         </div>
-
-
                                     </div>
-
                                     <hr class="bg-danger">
                                 </div>
                                 <div>
                                     <a href="teacher" class="btn btn-primary">Back to Page</a>
-                                    <button type="submit" name="submit_teacher" class="btn btn-success">Add Teacher(s)</button>
+                                    <button type="submit" name="submit_teacher" class="btn btn-success">Add
+                                        Teacher(s)</button>
                                 </div>
                             </form>
-
                         </div>
                     </div>
-
-
                 </div>
             </div>
             <?php include './../template/footer.php'; ?>
@@ -220,12 +300,13 @@ if (isset($_POST['submit_teacher'])) {
     </a>
     <?php include './../template/script.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const teacherFields = document.getElementById('teacherFields');
             const addMoreBtn = document.getElementById('addMore');
 
-            addMoreBtn.addEventListener('click', function(e) {
+            addMoreBtn.addEventListener('click', function (e) {
                 e.preventDefault();
                 const firstEntry = document.querySelector('.teacher-entry');
                 const clone = firstEntry.cloneNode(true);
@@ -247,10 +328,8 @@ if (isset($_POST['submit_teacher'])) {
                 teacherFields.appendChild(clone);
             });
 
-
-
             // Event delegation for dynamic select change
-            teacherFields.addEventListener('change', function(e) {
+            teacherFields.addEventListener('change', function (e) {
                 if (e.target.classList.contains('teacher-type')) {
                     const entry = e.target.closest('.teacher-entry');
                     const gradeContainer = entry.querySelector('.grade-container');
@@ -286,9 +365,7 @@ if (isset($_POST['submit_teacher'])) {
                 }
             });
         });
-    </script>
 
-    <script>
         function removeTeacherRow(button) {
             const allRows = document.querySelectorAll('.teacher-entry');
             if (allRows.length > 1) {
@@ -298,68 +375,7 @@ if (isset($_POST['submit_teacher'])) {
             }
         }
 
-
-        document.addEventListener('input', function(e) {
-            if (e.target.name === 'teacher_id[]') {
-                const allIds = document.querySelectorAll('input[name="teacher_id[]"]');
-                const enteredIds = [];
-
-                allIds.forEach((input, index) => {
-                    const value = input.value.trim();
-                    input.classList.remove('is-invalid'); // Reset any previous error style
-                    input.setCustomValidity(''); // Reset validity
-
-                    if (value !== '') {
-                        if (enteredIds.includes(value)) {
-                            input.classList.add('is-invalid');
-                            input.setCustomValidity('Duplicate Teacher ID within the form.');
-                        } else {
-                            enteredIds.push(value);
-                        }
-                    }
-                });
-            }
-        });
-
-
-        document.addEventListener('input', function(e) {
-            if (e.target.name === 'teacher_id[]') {
-                const input = e.target;
-                const value = input.value.trim();
-
-                // Prevent unnecessary requests
-                if (value === '') return;
-
-                // AJAX check against database
-                fetch('check_teacher_id.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: 'teacher_id=' + encodeURIComponent(value)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.exists) {
-                            input.classList.add('is-invalid');
-                            input.setCustomValidity('Teacher ID already exists in database.');
-                        } else {
-                            // Remove error if it's no longer duplicated
-                            input.classList.remove('is-invalid');
-                            input.setCustomValidity('');
-                        }
-                    });
-            }
-        });
-    </script>
-    <style>
-        .is-invalid {
-            border-color: #dc3545;
-        }
-    </style>
-
-    <script>
-        document.addEventListener('input', function(e) {
+        document.addEventListener('input', function (e) {
             if (e.target.name === 'teacher_id[]') {
                 checkDuplicateTeacherIDs();
             }
@@ -394,7 +410,6 @@ if (isset($_POST['submit_teacher'])) {
                     hasDuplicate = true;
                     values[val].forEach(input => {
                         input.classList.add('is-invalid');
-
                         const feedback = document.createElement('div');
                         feedback.className = 'duplicate-feedback text-danger small';
                         feedback.textContent = 'Duplicate Teacher ID';
@@ -402,13 +417,40 @@ if (isset($_POST['submit_teacher'])) {
                     });
                 }
             }
-
             return !hasDuplicate;
         }
 
         function validateTeacherIDs() {
             return checkDuplicateTeacherIDs();
         }
+
+        // AJAX check against database
+        document.addEventListener('input', function (e) {
+            if (e.target.name === 'teacher_id[]') {
+                const input = e.target;
+                const value = input.value.trim();
+
+                if (value === '') return;
+
+                fetch('check_teacher_id.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'teacher_id=' + encodeURIComponent(value)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            input.classList.add('is-invalid');
+                            input.setCustomValidity('Teacher ID already exists in database.');
+                        } else {
+                            input.classList.remove('is-invalid');
+                            input.setCustomValidity('');
+                        }
+                    });
+            }
+        });
     </script>
     <style>
         .is-invalid {
@@ -421,9 +463,6 @@ if (isset($_POST['submit_teacher'])) {
             font-size: 0.875em;
         }
     </style>
-
-
-
 </body>
 
 </html>

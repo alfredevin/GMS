@@ -23,8 +23,8 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 <ul class="navbar-nav  sidebar sidebar-dark accordion" id="accordionSidebar" style="background:#2C2C2C ;">
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index">
         <div class="sidebar-brand-icon ">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9BRQM_uqdXGt-qLZgiHczlYTKTnEcxifgsQ&s" width="50"
-                style="border-radius: 50%;" alt="">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9BRQM_uqdXGt-qLZgiHczlYTKTnEcxifgsQ&s"
+                width="50" style="border-radius: 50%;" alt="">
         </div>
     </a>
     <hr class="sidebar-divider my-0">
@@ -66,7 +66,8 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
         <?php if ($user_position == 'ENROLLMENT ADVISER' || $user_position == 'ADMIN'): ?>
             <li class="nav-item <?= $is_enrollment_active ? 'active' : '' ?>">
-                <a class="nav-link <?= $is_enrollment_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#collapseUtilities">
+                <a class="nav-link <?= $is_enrollment_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse"
+                    data-target="#collapseUtilities">
                     <i class="fas fa-user"></i>
                     <span>Enrollment</span>
                 </a>
@@ -74,12 +75,15 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Enrollment:</h6>
                         <?php if ($user_position == 'ENROLLMENT ADVISER'): ?>
-                            <a class="collapse-item <?= $current_page == 'new_enrolles' ? 'active' : '' ?>" href="new_enrolles">New Enrollees</a>
-                            <a class="collapse-item <?= $current_page == 'for_submission' ? 'active' : '' ?>" href="for_submission">For Submission</a>
+                            <a class="collapse-item <?= $current_page == 'new_enrolles' ? 'active' : '' ?>" href="new_enrolles">New
+                                Enrollees</a>
+                            <a class="collapse-item <?= $current_page == 'for_submission' ? 'active' : '' ?>"
+                                href="for_submission">For Submission</a>
                         <?php endif; ?>
 
                         <?php if ($user_position == 'ENROLLMENT ADVISER' || $user_position == 'ADMIN'): ?>
-                            <a class="collapse-item <?= $current_page == 'enrolled_students' ? 'active' : '' ?>" href="enrolled_students">Enrolled Students</a>
+                            <a class="collapse-item <?= $current_page == 'enrolled_students' ? 'active' : '' ?>"
+                                href="enrolled_students">Enrolled Students</a>
                         <?php endif; ?>
 
                     </div>
@@ -93,19 +97,24 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
         <?php if ($user_position == 'ADMIN'): ?>
             <li class="nav-item <?= $is_student_active ? 'active' : '' ?>">
-                <a class="nav-link <?= $is_student_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#student_manage"
-                    aria-expanded="<?= $is_student_active ? 'true' : 'false' ?>" aria-controls="student_manage">
+                <a class="nav-link <?= $is_student_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse"
+                    data-target="#student_manage" aria-expanded="<?= $is_student_active ? 'true' : 'false' ?>"
+                    aria-controls="student_manage">
                     <i class="fas fa-users"></i>
                     <span>Student</span>
                 </a>
-                <div id="student_manage" class="collapse <?= $is_student_active ? 'show' : '' ?>" aria-labelledby="headingUtilities"
-                    data-parent="#accordionSidebar">
+                <div id="student_manage" class="collapse <?= $is_student_active ? 'show' : '' ?>"
+                    aria-labelledby="headingUtilities" data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Enrollment:</h6>
-                        <a class="collapse-item <?= $current_page == 'student_list' ? 'active' : '' ?>" href="student_list">Student List</a>
-                        <a class="collapse-item <?= $current_page == 'sscList' ? 'active' : '' ?>" href="sscList">Special Science Class <br> Student List</a>
-                        <a class="collapse-item <?= $current_page == 'student_clearance' ? 'active' : '' ?>" href="student_clearance">Promote Student</a>
-                        <a class="collapse-item <?= $current_page == 'graduate_students' ? 'active' : '' ?>" href="graduate_students">Graduate Students</a>
+                        <a class="collapse-item <?= $current_page == 'student_list' ? 'active' : '' ?>"
+                            href="student_list">Student List</a>
+                        <a class="collapse-item <?= $current_page == 'sscList' ? 'active' : '' ?>" href="sscList">Special
+                            Science Class <br> Student List</a>
+                        <a class="collapse-item <?= $current_page == 'student_clearance' ? 'active' : '' ?>"
+                            href="student_clearance">Promote Student</a>
+                        <a class="collapse-item <?= $current_page == 'graduate_students' ? 'active' : '' ?>"
+                            href="graduate_students">Graduate Students</a>
                     </div>
                 </div>
             </li>
@@ -117,16 +126,20 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         <?php endif; ?>
         <?php if ($user_position == 'PRINCIPAL' || $user_position == 'ADMIN'): ?>
             <li class="nav-item <?= $is_manage_active ? 'active' : '' ?>">
-                <a class="nav-link <?= $is_manage_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                    aria-expanded="<?= $is_manage_active ? 'true' : 'false' ?>" aria-controls="collapseTwo">
+                <a class="nav-link <?= $is_manage_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse"
+                    data-target="#collapseTwo" aria-expanded="<?= $is_manage_active ? 'true' : 'false' ?>"
+                    aria-controls="collapseTwo">
                     <i class="fas fa-fw fa-folder"></i>
                     <span>Manage</span>
                 </a>
-                <div id="collapseTwo" class="collapse <?= $is_manage_active ? 'show' : '' ?>" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                <div id="collapseTwo" class="collapse <?= $is_manage_active ? 'show' : '' ?>" aria-labelledby="headingTwo"
+                    data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Manage:</h6>
-                        <a class="collapse-item <?= $current_page == 'assignSubject' ? 'active' : '' ?>" href="assignSubject">Subject List</a>
-                        <a class="collapse-item <?= $current_page == 'teacherList' ? 'active' : '' ?>" href="teacherList">Assign Teacher Subject</a>
+                        <a class="collapse-item <?= $current_page == 'assignSubject' ? 'active' : '' ?>"
+                            href="assignSubject">Subject List</a>
+                        <a class="collapse-item <?= $current_page == 'teacherList' ? 'active' : '' ?>" href="teacherList">Assign
+                            Teacher Subject</a>
                     </div>
                 </div>
             </li>
@@ -138,23 +151,28 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
                 Reports
             </div>
             <?php
-            $reports_pages = ['sf1', 'sf5', 'grade_report_card'];
+            $reports_pages = ['sf1', 'sf5','sf4',   'sf6', 'grade_report_card'];
             $is_reports_active = in_array($current_page, $reports_pages);
             ?>
 
             <li class="nav-item <?= $is_reports_active ? 'active' : '' ?>">
-                <a class="nav-link <?= $is_reports_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#collapsePages"
-                    aria-expanded="<?= $is_reports_active ? 'true' : 'false' ?>" aria-controls="collapsePages">
+                <a class="nav-link <?= $is_reports_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse"
+                    data-target="#collapsePages" aria-expanded="<?= $is_reports_active ? 'true' : 'false' ?>"
+                    aria-controls="collapsePages">
                     <i class="fas fa-fw fa-folder"></i>
                     <span>Reports</span>
                 </a>
-                <div id="collapsePages" class="collapse <?= $is_reports_active ? 'show' : '' ?>" aria-labelledby="headingPages" data-parent="#accordionSidebar">
+                <div id="collapsePages" class="collapse <?= $is_reports_active ? 'show' : '' ?>" aria-labelledby="headingPages"
+                    data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
-                        <h6 class="collapse-header">List of Reports:</h6>
-                        <a class="collapse-item <?= $current_page == 'sf1' ? 'active' : '' ?>" href="sf1">School Form 1</a>
+                        <h6 class="collapse-header">List of Reports:</h6> <a
+                            class="collapse-item <?= $current_page == 'sf4' ? 'active' : '' ?>" href="sf4">School Form 4</a> 
                         <a class="collapse-item <?= $current_page == 'sf5' ? 'active' : '' ?>" href="sf5">School Form 5</a>
+                        <a class="collapse-item <?= $current_page == 'sf6' ? 'active' : '' ?>" href="sf6">School Form 6</a>
                         <a class="collapse-item <?= $current_page == 'sf10' ? 'active' : '' ?>" href="sf10">School Form 10 </a>
-                        <a class="collapse-item <?= $current_page == 'grade_report_card' ? 'active' : '' ?>" href="grade_report_card">Grade Report Cards</a>
+                        <a class="collapse-item <?= $current_page == 'grade_report_card' ? 'active' : '' ?>"
+                            href="grade_report_card">Grade Report Cards</a>
+
 
                     </div>
                 </div>
@@ -169,23 +187,31 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
             ?>
 
             <li class="nav-item <?= $is_maintenance_active ? 'active' : '' ?>">
-                <a class="nav-link <?= $is_maintenance_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#maintenance"
-                    aria-expanded="<?= $is_maintenance_active ? 'true' : 'false' ?>" aria-controls="maintenance">
+                <a class="nav-link <?= $is_maintenance_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse"
+                    data-target="#maintenance" aria-expanded="<?= $is_maintenance_active ? 'true' : 'false' ?>"
+                    aria-controls="maintenance">
                     <i class="fas fa-fw fa-cog"></i>
                     <span>Maintenance</span>
                 </a>
-                <div id="maintenance" class="collapse <?= $is_maintenance_active ? 'show' : '' ?>" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                <div id="maintenance" class="collapse <?= $is_maintenance_active ? 'show' : '' ?>" aria-labelledby="headingTwo"
+                    data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
                         <h6 class="collapse-header">Maintenance:</h6>
                         <a class="collapse-item" href="users">User Account</a>
-                        <a class="collapse-item <?= $current_page == 'enrollment_period' ? 'active' : '' ?>" href="enrollment_period">Enrollment Period-(SY)</a>
-                        <a class="collapse-item <?= $current_page == 'sectionGrade' ? 'active' : '' ?>" href="sectionGrade">Section</a>
-                        <a class="collapse-item <?= $current_page == 'subjectGrade' ? 'active' : '' ?>" href="subjectGrade">Subject</a>
+                        <a class="collapse-item <?= $current_page == 'enrollment_period' ? 'active' : '' ?>"
+                            href="enrollment_period">Enrollment Period-(SY)</a>
+                        <a class="collapse-item <?= $current_page == 'sectionGrade' ? 'active' : '' ?>"
+                            href="sectionGrade">Section</a>
+                        <a class="collapse-item <?= $current_page == 'subjectGrade' ? 'active' : '' ?>"
+                            href="subjectGrade">Subject</a>
                         <a class="collapse-item <?= $current_page == 'room' ? 'active' : '' ?>" href="room">Classroom</a>
                         <a class="collapse-item <?= $current_page == 'teacher' ? 'active' : '' ?>" href="teacher">Teacher</a>
-                        <a class="collapse-item <?= $current_page == 'requirements' ? 'active' : '' ?>" href="requirements">Requirements</a>
-                        <a class="collapse-item <?= $current_page == 'school_events' ? 'active' : '' ?>" href="school_events">Announcement <br>(School Events)</a>
-                        <a class="collapse-item <?= $current_page == 'ssc' ? 'active' : '' ?>" href="ssc">Special Science Class</a>
+                        <a class="collapse-item <?= $current_page == 'requirements' ? 'active' : '' ?>"
+                            href="requirements">Requirements</a>
+                        <a class="collapse-item <?= $current_page == 'school_events' ? 'active' : '' ?>"
+                            href="school_events">Announcement <br>(School Events)</a>
+                        <a class="collapse-item <?= $current_page == 'ssc' ? 'active' : '' ?>" href="ssc">Special Science
+                            Class</a>
                     </div>
                 </div>
             </li>
@@ -238,17 +264,22 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         ?>
 
         <li class="nav-item <?= $is_task_active ? 'active' : '' ?>">
-            <a class="nav-link <?= $is_task_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#task_manage"
-                aria-expanded="<?= $is_task_active ? 'true' : 'false' ?>" aria-controls="task_manage">
+            <a class="nav-link <?= $is_task_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse"
+                data-target="#task_manage" aria-expanded="<?= $is_task_active ? 'true' : 'false' ?>"
+                aria-controls="task_manage">
                 <i class="fas fa-fw fa-file-alt"></i>
                 <span>Task</span>
             </a>
-            <div id="task_manage" class="collapse <?= $is_task_active ? 'show' : '' ?>" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+            <div id="task_manage" class="collapse <?= $is_task_active ? 'show' : '' ?>" aria-labelledby="headingTwo"
+                data-parent="#accordionSidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
                     <h6 class="collapse-header">List of Task:</h6>
-                    <a class="collapse-item <?= $current_page == 'upcoming_announcement' ? 'active' : '' ?>" href="upcoming_announcement">Upcoming Task</a>
-                    <a class="collapse-item <?= $current_page == 'today_task' ? 'active' : '' ?>" href="today_task">Today Task</a>
-                    <a class="collapse-item <?= $current_page == 'recent_task' ? 'active' : '' ?>" href="recent_task">Recent Task</a>
+                    <a class="collapse-item <?= $current_page == 'upcoming_announcement' ? 'active' : '' ?>"
+                        href="upcoming_announcement">Upcoming Task</a>
+                    <a class="collapse-item <?= $current_page == 'today_task' ? 'active' : '' ?>" href="today_task">Today
+                        Task</a>
+                    <a class="collapse-item <?= $current_page == 'recent_task' ? 'active' : '' ?>" href="recent_task">Recent
+                        Task</a>
                 </div>
             </div>
         </li>
@@ -274,16 +305,22 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
         <!-- Report Dropdown -->
         <li class="nav-item <?= $is_report_active ? 'active' : '' ?>">
-            <a class="nav-link <?= $is_report_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse" data-target="#teacher_manage"
-                aria-expanded="<?= $is_report_active ? 'true' : 'false' ?>" aria-controls="teacher_manage">
+            <a class="nav-link <?= $is_report_active ? '' : 'collapsed' ?>" href="#" data-toggle="collapse"
+                data-target="#teacher_manage" aria-expanded="<?= $is_report_active ? 'true' : 'false' ?>"
+                aria-controls="teacher_manage">
                 <i class="fas fa-fw fa-file-alt"></i>
                 <span>Report</span>
             </a>
-            <div id="teacher_manage" class="collapse <?= $is_report_active ? 'show' : '' ?>" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+            <div id="teacher_manage" class="collapse <?= $is_report_active ? 'show' : '' ?>" aria-labelledby="headingTwo"
+                data-parent="#accordionSidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
                     <h6 class="collapse-header">Report:</h6>
-                    <a class="collapse-item <?= $current_page == 'sf2' ? 'active' : '' ?>" href="sf2">School Form 2 Report</a>
-                    <a class="collapse-item <?= $current_page == 'sf9' ? 'active' : '' ?>" href="sf9">School Form 9 Report</a>
+                    <a class="collapse-item <?= $current_page == 'sf1' ? 'active' : '' ?>" href="sf1">School Form 1
+                        Report</a>
+                    <a class="collapse-item <?= $current_page == 'sf2' ? 'active' : '' ?>" href="sf2">School Form 2
+
+                        <a class="collapse-item <?= $current_page == 'sf9' ? 'active' : '' ?>" href="sf9">School Form 9
+                            Report</a>
                 </div>
             </div>
         </li>
@@ -317,7 +354,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 <!-- End of Sidebar -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    document.getElementById('signOutLink').addEventListener('click', function(event) {
+    document.getElementById('signOutLink').addEventListener('click', function (event) {
         event.preventDefault();
 
         Swal.fire({

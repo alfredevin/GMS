@@ -3,8 +3,8 @@ session_start();
 date_default_timezone_set("Asia/Manila");
 include 'config.php';
 
-
-
+// FORCE MYSQL TIMEZONE TO MANILA (+08:00)
+mysqli_query($conn, "SET time_zone = '+08:00'");
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -292,12 +292,12 @@ if (isset($_POST['changepass'])) {
             echo "<div style='display: none;'>";
             $mail = new PHPMailer(true);
             try {
-                $mail->SMTPDebug = 0; 
+                $mail->SMTPDebug = 0;
                 $mail->isSMTP();
                 $mail->Host = 'smtp.gmail.com';
                 $mail->SMTPAuth = true;
                 $mail->Username = 'highschoolbangbangnational@gmail.com';
-                $mail->Password = 'njdvqtbzbgtppobe'; 
+                $mail->Password = 'njdvqtbzbgtppobe';
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
                 $mail->Port = 465;
 
@@ -333,9 +333,9 @@ if (isset($_POST['changepass'])) {
                     <p><strong>Bangbang National High School</strong></p>
                 ';
                 $mail->send();
-?>
+                ?>
                 <script>
-                    document.addEventListener('DOMContentLoaded', function() {
+                    document.addEventListener('DOMContentLoaded', function () {
                         Swal.fire({
                             title: "Success!",
                             text: "We have sent a password reset link to your email address.",
@@ -348,12 +348,12 @@ if (isset($_POST['changepass'])) {
                         });
                     });
                 </script>
-            <?php
+                <?php
             } catch (Exception $e) {
                 echo "Mailer Error: {$mail->ErrorInfo}";
-            ?>
+                ?>
                 <script>
-                    document.addEventListener('DOMContentLoaded', function() {
+                    document.addEventListener('DOMContentLoaded', function () {
                         Swal.fire({
                             title: "Failed!",
                             text: "Message could not be sent. Please try again later.",
@@ -362,12 +362,12 @@ if (isset($_POST['changepass'])) {
                         });
                     });
                 </script>
-            <?php
+                <?php
             }
         } else {
             ?>
             <script>
-                document.addEventListener('DOMContentLoaded', function() {
+                document.addEventListener('DOMContentLoaded', function () {
                     Swal.fire({
                         title: "Failed!",
                         text: "Something went wrong while processing your request.",
@@ -376,12 +376,12 @@ if (isset($_POST['changepass'])) {
                     });
                 });
             </script>
-        <?php
+            <?php
         }
     } else {
         ?>
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 Swal.fire({
                     title: "Email Not Found!",
                     text: "No account associated with this email address.",
@@ -390,7 +390,7 @@ if (isset($_POST['changepass'])) {
                 });
             });
         </script>
-<?php
+        <?php
     }
 }
 
@@ -403,7 +403,8 @@ if (isset($_POST['changepass'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
     <title>Bangbang National Highschool</title>
-    <link href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9BRQM_uqdXGt-qLZgiHczlYTKTnEcxifgsQ&s" rel="icon">
+    <link href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9BRQM_uqdXGt-qLZgiHczlYTKTnEcxifgsQ&s"
+        rel="icon">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/sweetalert2@10">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10">
     </script>
@@ -412,7 +413,6 @@ if (isset($_POST['changepass'])) {
     <script src="sweetalert2.all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- Font Awesome 6 Free -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap");
@@ -821,11 +821,13 @@ if (isset($_POST['changepass'])) {
     </style>
 </head>
 
-<body style="background: url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoRsljm7GdU0EL_EtQ6lO2af-nWJD9EqlE8A&s) no-repeat;background-size:cover;">
+<body
+    style="background: url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoRsljm7GdU0EL_EtQ6lO2af-nWJD9EqlE8A&s) no-repeat;background-size:cover;">
     <div class="container">
         <div class="forms-container">
             <div class="signin-signup">
-                <form method="POST" autocomplete="off" class="sign-in-form" style="background-color: rgba(0, 0, 0, 0.4);">
+                <form method="POST" autocomplete="off" class="sign-in-form"
+                    style="background-color: rgba(0, 0, 0, 0.4);">
                     <h2 class="title " style="color:white;">LOGIN</h2>
                     <div class="input-field">
                         <i class="fas fa-user"></i>
@@ -836,7 +838,6 @@ if (isset($_POST['changepass'])) {
                         <input type="password" name="password" id="password" placeholder="Password" />
                     </div>
 
-                    <!-- Show Password Checkbox -->
                     <div class="form-check mt-2" style="color:white;">
                         <input class="form-check-input" type="checkbox" id="showPassword">
                         <label class="form-check-label  " for="showPassword">
@@ -847,13 +848,14 @@ if (isset($_POST['changepass'])) {
                         const checkbox = document.getElementById('showPassword');
                         const passwordField = document.getElementById('password');
 
-                        checkbox.addEventListener('change', function() {
+                        checkbox.addEventListener('change', function () {
                             passwordField.type = this.checked ? 'text' : 'password';
                         });
                     </script>
 
 
-                    <input type="submit" name="submit" value="Login" class="btn solid" style="background:rgb(201, 96, 21);" />
+                    <input type="submit" name="submit" value="Login" class="btn solid"
+                        style="background:rgb(201, 96, 21);" />
 
                     <p class="social-text" style="margin:0;color:white;">Forgot you password??</p>
 
@@ -863,14 +865,15 @@ if (isset($_POST['changepass'])) {
                         </a>
                     </div>
                 </form>
-                <!-- Forgot Password Form -->
-                <form method="POST" class="forgot-password-form" style="display:none; background-color: rgba(0, 0, 0, 0.4);">
+                <form method="POST" class="forgot-password-form"
+                    style="display:none; background-color: rgba(0, 0, 0, 0.4);">
                     <h2 class="text-center" style="color:white;">Forgot Password</h2>
                     <div class="input-field">
                         <i class="fas fa-envelope"></i>
                         <input type="email" name="reset_email" placeholder="Enter your email" required />
                     </div>
-                    <input type="submit" name="changepass" value="Send Reset Link" class="btn solid" style="background:rgb(201, 96, 21);" />
+                    <input type="submit" name="changepass" value="Send Reset Link" class="btn solid"
+                        style="background:rgb(201, 96, 21);" />
 
                     <p class="social-text" style="margin:0;color:white;">Remembered your password?</p>
                     <div class="social-media" style="margin:0;">
@@ -888,7 +891,9 @@ if (isset($_POST['changepass'])) {
                         style="border-radius:50%;" width="100" alt="">
                     <h3 style="text-transform:uppercase;font-family:roman;">Bangbang National High School
                     </h3>
-                    <p>Bangbang National High School is a school in Gasan, Marinduque, Mimaropa. Bangbang National High School is situated nearby to Libtangin Bridge, as well as near the place of worship Birhan De Barangay Catholic Chapel.</p>
+                    <p>Bangbang National High School is a school in Gasan, Marinduque, Mimaropa. Bangbang National High
+                        School is situated nearby to Libtangin Bridge, as well as near the place of worship Birhan De
+                        Barangay Catholic Chapel.</p>
                 </div>
             </div>
 
@@ -914,13 +919,13 @@ if (isset($_POST['changepass'])) {
         const loginForm = document.querySelector('.sign-in-form');
         const backToLogin = document.querySelector('#backToLogin');
 
-        forgotLink.addEventListener('click', function(e) {
+        forgotLink.addEventListener('click', function (e) {
             e.preventDefault();
             loginForm.style.display = 'none';
             forgotForm.style.display = 'flex';
         });
 
-        backToLogin.addEventListener('click', function(e) {
+        backToLogin.addEventListener('click', function (e) {
             e.preventDefault();
             forgotForm.style.display = 'none';
             loginForm.style.display = 'flex';

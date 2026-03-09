@@ -20,7 +20,8 @@ include '../../config.php';
                                     <h6 class="m-0 font-weight-bold text-primary">List of Teacher</h6>
                                 </div>
                                 <div class="col-">
-                                    <a href="addTeacher" class="btn btn-success btn-success btn-sm "><i class="fas fa-plus"></i> Add Teacher</a>
+                                    <a href="addTeacher" class="btn btn-success btn-success btn-sm "><i
+                                            class="fas fa-plus"></i> Add Teacher</a>
                                 </div>
                             </div>
                         </div>
@@ -34,6 +35,7 @@ include '../../config.php';
                                             <th>Profile</th>
                                             <th> Type</th>
                                             <th> Email</th>
+                                            <th> Position</th>
                                             <th> Specialization</th>
                                             <th>Grade/Section</th>
                                             <th>Action</th>
@@ -41,6 +43,7 @@ include '../../config.php';
                                     </thead>
                                     <tbody>
                                         <?php
+                                        // The query uses SELECT * so position is automatically included
                                         $query = "SELECT *,
             t.profile, 
             t.teacher_id, 
@@ -69,6 +72,7 @@ include '../../config.php';
                                                 </td>";
                                             echo "<td>" . htmlspecialchars($row['teacher_type']) . "</td>";
                                             echo "<td>" . htmlspecialchars($row['email']) . "</td>";
+                                            echo "<td>" . htmlspecialchars($row['position']) . "</td>"; // ADDED: Position Data
                                             echo "<td>" . htmlspecialchars($row['specialization']) . "</td>";
                                             echo "<td>" . $grade_section . "</td>";
 
@@ -81,13 +85,14 @@ include '../../config.php';
        data-grade="' . $row['grade_level'] . '"
        data-section="' . $row['section_id'] . '"
        data-email="' . $row['email'] . '"
+       data-position="' . htmlspecialchars($row['position']) . '" 
        data-status="' . $row['teacher_status'] . '"
 
     >
        Edit
     </a>
-</td>';
-
+</td>'; // ADDED data-position above
+                                        
                                             echo "</tr>";
                                         }
                                         ?>
@@ -107,15 +112,16 @@ include '../../config.php';
     </a>
     <?php include './../template/script.php'; ?>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             document.querySelectorAll('.editTeacherBtn').forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function () {
                     const teacherId = this.dataset.id;
                     const teacherName = this.dataset.name;
                     const teacherType = this.dataset.type;
                     const gradeLevel = this.dataset.grade;
                     const sectionId = this.dataset.section;
                     const email = this.dataset.email;
+                    const position = this.dataset.position; // ADDED: Get position
                     const status = this.dataset.status;
 
 
@@ -123,12 +129,16 @@ include '../../config.php';
                         title: 'Edit Teacher',
                         html: `
                     <label>Teacher Id:</label>
-                    <input id="edit_teacher_id" class="swal2-input" value="${teacherId}"  >
+                    <input id="edit_teacher_id" class="swal2-input" value="${teacherId}" readonly>
                     <label>Name:</label>
                     <input id="edit_teacher_name" class="swal2-input" value="${teacherName}" required oninput="this.value = this.value.toUpperCase();">
                     
                     <label>Email:</label>
                     <input id="edit_email" class="swal2-input" value="${email}" required >
+
+                    <label>Position:</label>
+                    <input id="edit_position" class="swal2-input" value="${position}" required oninput="this.value = this.value.toUpperCase();">
+                    
                     <label>Type:</label>
                     <select id="edit_teacher_type" class="swal2-input">
                         <option value="Subject Teacher" ${teacherType === 'Subject Teacher' ? 'selected' : ''}>Subject Teacher</option>
@@ -141,12 +151,10 @@ include '../../config.php';
                             <option value="8" ${gradeLevel == 8 ? 'selected' : ''}>Grade 8</option>
                             <option value="9" ${gradeLevel == 9 ? 'selected' : ''}>Grade 9</option>
                             <option value="10" ${gradeLevel == 10 ? 'selected' : ''}>Grade 10</option>
-                            <!-- Add more grades if needed -->
-                        </select>
+                            </select>
                         <label>Section:</label>
                         <select id="edit_section_id" class="swal2-input">
-                            <!-- Sections will be dynamically filled -->
-                        </select>
+                            </select>
                        
 
                     </div>
@@ -203,6 +211,7 @@ include '../../config.php';
                             const name = document.getElementById('edit_teacher_name').value;
                             const type = document.getElementById('edit_teacher_type').value;
                             const emails = document.getElementById('edit_email').value;
+                            const pos = document.getElementById('edit_position').value; // ADDED: capture updated position
                             const grade = type === 'Class Adviser' ? document.getElementById('edit_grade_level').value : '';
                             const section = type === 'Class Adviser' ? document.getElementById('edit_section_id').value : '';
                             const status = document.getElementById('edit_teacher_status').value;
@@ -211,7 +220,7 @@ include '../../config.php';
                             xhr.open("POST", "update_teacher.php", true);
                             xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
-                            xhr.onload = function() {
+                            xhr.onload = function () {
                                 if (this.responseText.trim() === "success") {
                                     Swal.fire('Updated!', 'Teacher updated successfully.', 'success').then(() => location.reload());
                                 } else if (this.responseText.trim() === "duplicate") {
@@ -225,7 +234,8 @@ include '../../config.php';
 
                             };
 
-                            const data = `teacher_id=${encodeURIComponent(id)}&teacher_name=${encodeURIComponent(name)}&teacher_type=${encodeURIComponent(type)}&teacher_email=${encodeURIComponent(emails)}&grade_level=${encodeURIComponent(grade)}&section_id=${encodeURIComponent(section)}&status=${encodeURIComponent(status)}`;
+                            // ADDED: teacher_position parameter passed via POST
+                            const data = `teacher_id=${encodeURIComponent(id)}&teacher_name=${encodeURIComponent(name)}&teacher_type=${encodeURIComponent(type)}&teacher_email=${encodeURIComponent(emails)}&teacher_position=${encodeURIComponent(pos)}&grade_level=${encodeURIComponent(grade)}&section_id=${encodeURIComponent(section)}&status=${encodeURIComponent(status)}`;
                             xhr.send(data);
                         }
                     });

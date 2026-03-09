@@ -22,7 +22,7 @@ if (isset($_POST['submit'])) {
 
     $lastname = strtoupper($_POST['lastname']);
     $firstname = strtoupper($_POST['firstname']);
-    $middlename = strtoupper($_POST['middlename']);
+    $middlename = strtoupper($_POST['middlename'] ?? '');
     $extname = strtoupper($_POST['extname']);
     $user_ids = strtoupper($_POST['user_ids']);
     $grade = $_POST['grade'];
@@ -347,7 +347,7 @@ if (isset($_POST['submit'])) {
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label">Middle Name</label>
-                                            <input oninput="this.value = this.value.toUpperCase()" type="text" name="middlename" class="form-control" required>
+                                            <input oninput="this.value = this.value.toUpperCase()" type="text" name="middlename" class="form-control" >
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label">Ext Name</label>

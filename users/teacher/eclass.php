@@ -1,109 +1,6 @@
 <?php
 include '../../config.php';
 
-// --- 1. EXPORT TO EXCEL LOGIC (Must be at the very top) ---
-if (isset($_POST['export_excel'])) {
-    $teacher_id_export = $_POST['teacher_id_export'];
-    $filename = "My_Files_Report_" . date('Ymd') . ".xls";
-
-    header("Content-Type: application/vnd.ms-excel");
-    header("Content-Disposition: attachment; filename=\"$filename\"");
-
-    // Simple Excel Table Output
-    echo "File Name\tDate Uploaded\tFile Type\tFile Path\n"; // Headers
-
-    $sql = "SELECT * FROM eclass_files WHERE teacher_id = '$teacher_id_export' ORDER BY date_upload DESC";
-    $result = mysqli_query($conn, $sql);
-
-    while ($row = mysqli_fetch_assoc($result)) {
-        // Clean data for Excel
-        $name = $row['file_display_name'];
-        $date = date('M d, Y h:i A', strtotime($row['date_upload']));
-        $ext = pathinfo($row['file_path'], PATHINFO_EXTENSION);
-        $path = $row['file_path'];
-
-        echo "$name\t$date\t$ext\t$path\n";
-    }
-    exit; // Stop the script here so it only downloads the file
-}
-
-// --- 2. REGULAR PAGE LOGIC ---
-$swal_icon = "";
-$swal_title = "";
-$show_swal = false;
-
-if (isset($_POST['upload_file'])) {
-    $teacher_id = $_POST['teacher_id'];
-    $file_display_name = $_POST['file_name'];
-    $date_upload = date('Y-m-d H:i:s');
-
-    $target_dir = "./uploads/";
-
-    $original_filename = basename($_FILES["file_content"]["name"]);
-    $file_extension = strtolower(pathinfo($original_filename, PATHINFO_EXTENSION));
-
-    // Add time to filename to avoid duplicates
-    $new_filename = time() . "_" . preg_replace("/[^a-zA-Z0-9.]/", "", $original_filename);
-    $target_file = $target_dir . $new_filename;
-
-    $uploadOk = 1;
-
-    // Check size (10MB)
-    if ($_FILES["file_content"]["size"] > 10000000) {
-        $show_swal = true;
-        $swal_icon = "error";
-        $swal_title = "File is too large! Max 10MB.";
-        $uploadOk = 0;
-    }
-
-    // Allowed types (Added xls, xlsx, csv for Excel support)
-    $allowed_types = array("jpg", "png", "jpeg", "pdf", "docx", "pptx", "xlsx", "xls", "csv", "txt", "zip");
-    if (!in_array($file_extension, $allowed_types)) {
-        $show_swal = true;
-        $swal_icon = "error";
-        $swal_title = "Invalid file type.";
-        $uploadOk = 0;
-    }
-
-    if ($uploadOk == 1) {
-        if (move_uploaded_file($_FILES["file_content"]["tmp_name"], $target_file)) {
-            $stmt = $conn->prepare("INSERT INTO eclass_files (teacher_id, file_display_name, file_path, date_upload) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("isss", $teacher_id, $file_display_name, $new_filename, $date_upload);
-
-            if ($stmt->execute()) {
-                $show_swal = true;
-                $swal_icon = "success";
-                $swal_title = "File Uploaded Successfully!";
-            } else {
-                $show_swal = true;
-                $swal_icon = "error";
-                $swal_title = "Database Error.";
-            }
-            $stmt->close();
-        } else {
-            $show_swal = true;
-            $swal_icon = "error";
-            $swal_title = "Error moving file.";
-        }
-    }
-}
-
-// Delete Logic
-if (isset($_GET['delete'])) {
-    $id = $_GET['delete'];
-    $query = "SELECT file_path FROM eclass_files WHERE file_id = '$id'";
-    $result = mysqli_query($conn, $query);
-    $row = mysqli_fetch_assoc($result);
-
-    if ($row) {
-        $file_to_delete = "./uploads/" . $row['file_path'];
-        if (file_exists($file_to_delete)) {
-            unlink($file_to_delete);
-        }
-        mysqli_query($conn, "DELETE FROM eclass_files WHERE file_id='$id'");
-        echo "<script>window.location.href='eclass_upload.php';</script>";
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -111,25 +8,70 @@ if (isset($_GET['delete'])) {
 <?php include './../template/header.php' ?>
 
 <style>
-    .upload-area {
-        border: 2px dashed #4e73df;
-        background-color: #f8f9fc;
-        padding: 30px;
+    /* User-Friendly Table Styling */
+    .grade-table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .grade-table th {
+        background-color: #4e73df;
+        color: white;
         text-align: center;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: 0.3s;
+        vertical-align: middle;
+        white-space: nowrap;
+        font-size: 13px;
+        padding: 12px 15px;
+        border-bottom: 2px solid #2e59d9;
     }
 
-    .upload-area:hover {
-        background-color: #eaecf4;
-        border-color: #224abe;
+    .grade-table td {
+        text-align: center;
+        vertical-align: middle;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 10px;
+        border-bottom: 1px solid #e3e6f0;
+        border-right: 1px solid #e3e6f0;
     }
 
-    .file-icon-lg {
-        font-size: 40px;
-        color: #4e73df;
-        margin-bottom: 10px;
+    /* STICKY COLUMN: Makes the Student Name stay on screen when scrolling horizontally */
+    .sticky-name-col {
+        position: sticky;
+        left: 0;
+        background-color: #fff !important;
+        z-index: 1;
+        min-width: 250px;
+        border-right: 3px solid #d1d3e2 !important;
+        /* Strong border to separate from scrolling grades */
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+    }
+
+    th.sticky-name-col {
+        background-color: #2e59d9 !important;
+        /* Darker blue for the sticky header */
+        z-index: 2;
+    }
+
+    /* Grade Status Colors */
+    .grade-inc {
+        color: #e74a3b;
+        background-color: #fdecee;
+        /* Light red bg for easy spotting */
+    }
+
+    .grade-pass {
+        color: #1cc88a;
+    }
+
+    .gen-avg-cell {
+        background-color: #f8f9fc;
+        font-size: 15px;
+    }
+
+    /* Hover effect for sticky column */
+    .grade-table tbody tr:hover td.sticky-name-col {
+        background-color: #f1f3f6 !important;
     }
 </style>
 
@@ -139,117 +81,199 @@ if (isset($_GET['delete'])) {
         <div id="content-wrapper" class="d-flex flex-column">
             <div id="content">
                 <?php include './../template/navbar.php'; ?>
+                <?php
 
+                // Kunin ang Teacher ID mula sa session
+                $teacher_id = $_SESSION['teacher_id'] ?? $_GET['teacher_id'] ?? '';
+
+                // --- GRADE COMPUTATION HELPER FUNCTIONS ---
+                function computeSpecificAverage($conn, $q, $type, $subject_id, $student_id)
+                {
+                    $query = "SELECT score, items FROM announcement_tbl 
+              INNER JOIN student_scores_tbl ON announcement_tbl.announcement_jd = student_scores_tbl.announcement_id 
+              WHERE quarterly = '$q' AND type = '$type' AND subject = '$subject_id' AND student_id = '$student_id'";
+                    $res = mysqli_query($conn, $query);
+                    $total = 0;
+                    $count = 0;
+                    while ($row = mysqli_fetch_assoc($res)) {
+                        if ($row['items'] > 0) {
+                            $total += ($row['score'] / $row['items']) * 100;
+                            $count++;
+                        }
+                    }
+                    return $count > 0 ? $total / $count : 0;
+                }
+
+                function getFinalSubjectGrade($conn, $student_id, $subject_id)
+                {
+                    $finalSum = 0;
+                    $gradeCount = 0;
+
+                    for ($q = 1; $q <= 4; $q++) {
+                        $quiz = computeSpecificAverage($conn, $q, 'quiz', $subject_id, $student_id);
+                        $pt = computeSpecificAverage($conn, $q, 'pt', $subject_id, $student_id);
+                        $exam = computeSpecificAverage($conn, $q, 'exam', $subject_id, $student_id);
+
+                        $finalGrade = ($quiz * 0.20) + ($pt * 0.60) + ($exam * 0.20);
+                        if ($finalGrade > 0) {
+                            $finalSum += $finalGrade;
+                            $gradeCount++;
+                        }
+                    }
+
+                    if ($gradeCount == 4) {
+                        return number_format($finalSum / 4, 2);
+                    } else {
+                        return 'INC';
+                    }
+                }
+
+                // Kunin ang Section at Grade Level ng Adviser
+                $adviser_query = mysqli_query($conn, "SELECT grade_level, section_id FROM teacher_tbl WHERE teacher_id = '$teacher_id' AND teacher_type = 'Class Adviser'");
+                $is_adviser = false;
+                $adviser_grade = '';
+                $adviser_section = '';
+                $subjects = [];
+
+                if (mysqli_num_rows($adviser_query) > 0) {
+                    $is_adviser = true;
+                    $adv_row = mysqli_fetch_assoc($adviser_query);
+                    $adviser_grade = $adv_row['grade_level'];
+                    $adviser_section = $adv_row['section_id'];
+
+                    // Kunin ang lahat ng Subjects para sa Grade Level na ito bilang Columns
+                    $sub_res = mysqli_query($conn, "SELECT subject_id, subject_name FROM subject_tbl WHERE subject_grade = '$adviser_grade'");
+                    while ($s = mysqli_fetch_assoc($sub_res)) {
+                        $subjects[] = $s;
+                    }
+                }
+                ?>
                 <div class="container-fluid">
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800">eClass File Manager</h1>
-
-                        <form method="POST" action="">
-                            <input type="hidden" name="teacher_id_export" value="<?php echo $teacher_id; ?>">
-                            <button type="submit" name="export_excel" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
-                                <i class="fas fa-file-excel fa-sm text-white-50"></i> Export List to Excel
-                            </button>
-                        </form>
+                        <h1 class="h3 mb-0 text-gray-800">Master E-Class Record</h1>
+                        <a href="print_master_grades" target="_blank"
+                            class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                            <i class="fas fa-print fa-sm text-white-50"></i> Print / Save as PDF
+                        </a>
                     </div>
 
-                    <div class="row">
-                        <div class="col-lg-4">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 bg-primary text-white">
-                                    <h6 class="m-0 font-weight-bold"><i class="fas fa-cloud-upload-alt"></i> Upload Files</h6>
-                                </div>
-                                <div class="card-body">
-                                    <form action="" method="POST" enctype="multipart/form-data" autocomplete="off">
-                                        <input type="hidden" name="teacher_id" value="<?php echo $teacher_id; ?>">
-
-                                        <div class="form-group">
-                                            <label class="font-weight-bold text-gray-700">File Name / Title</label>
-                                            <input type="text" name="file_name" class="form-control" placeholder="e.g. Science Quiz 1" required>
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label class="font-weight-bold text-gray-700">Attach File</label>
-                                            <div class="upload-area" onclick="document.getElementById('customFile').click()">
-                                                <i class="fas fa-file-upload file-icon-lg"></i>
-                                                <p class="mb-0 text-gray-600" id="fileNameDisplay">Click to Browse or Drag File Here</p>
-                                                <small class="text-muted d-block mt-2">Supports: Excel, PDF, Word, Images</small>
-                                            </div>
-                                            <input type="file" name="file_content" id="customFile" style="display:none;" required>
-                                        </div>
-
-                                        <button type="submit" name="upload_file" class="btn btn-primary btn-block btn-lg">
-                                            Upload Now
-                                        </button>
-                                    </form>
-                                </div>
+                    <?php if ($is_adviser): ?>
+                        <div class="card shadow mb-4 border-bottom-primary">
+                            <div class="card-header py-3 bg-white d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold text-primary text-uppercase">
+                                    <i class="fas fa-chalkboard-teacher mr-2"></i> Class Master Grade Sheet (Grade
+                                    <?= htmlspecialchars($adviser_grade) ?>)
+                                </h6>
                             </div>
-                        </div>
+                            <div class="card-body">
 
-                        <div class="col-lg-8">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">Uploaded Documents</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
-                                            <thead class="thead-light">
+                                <?php if (empty($subjects)): ?>
+                                    <div class="alert alert-warning text-center">
+                                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i><br>
+                                        <strong>No Subjects Found!</strong> Please assign subjects to Grade
+                                        <?= htmlspecialchars($adviser_grade) ?> in the Subject Management first.
+                                    </div>
+                                <?php else: ?>
+
+                                    <div class="table-responsive border rounded">
+                                        <table class="table table-hover grade-table w-100" id="dataTableGrades">
+                                            <thead>
                                                 <tr>
-                                                    <th>Document</th>
-                                                    <th>Date</th>
-                                                    <th class="text-center" width="15%">Actions</th>
+                                                    <th class="text-left sticky-name-col">Learner's Name</th>
+
+                                                    <?php foreach ($subjects as $sub): ?>
+                                                        <th><?= htmlspecialchars($sub['subject_name']) ?></th>
+                                                    <?php endforeach; ?>
+
+                                                    <th class="bg-warning text-dark">Gen. Average</th>
+                                                    <th class="bg-success text-white">Remarks</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <?php
-                                                $sql = "SELECT * FROM eclass_files WHERE teacher_id = '$teacher_id' ORDER BY date_upload DESC";
-                                                $result = mysqli_query($conn, $sql);
-                                                while ($row = mysqli_fetch_assoc($result)) {
-                                                    $file_url = "./uploads/" . $row['file_path'];
-                                                    $ext = strtolower(pathinfo($row['file_path'], PATHINFO_EXTENSION));
+                                                // Kunin lahat ng estudyante sa section na ito
+                                                $stud_query = "SELECT s.student_id, e.firstname, e.lastname, e.middlename 
+                                                               FROM student_tbl s
+                                                               INNER JOIN enrollment_tbl e ON s.enrollment_id = e.enrollmentId
+                                                               WHERE s.section_id = '$adviser_section' AND s.student_grade = '$adviser_grade'
+                                                               ORDER BY e.lastname ASC";
+                                                $stud_res = mysqli_query($conn, $stud_query);
 
-                                                    // Dynamic Icon Logic
-                                                    $icon = "fa-file text-secondary"; // Default
-                                                    if (in_array($ext, ['xls', 'xlsx', 'csv'])) $icon = "fa-file-excel text-success";
-                                                    elseif (in_array($ext, ['pdf'])) $icon = "fa-file-pdf text-danger";
-                                                    elseif (in_array($ext, ['doc', 'docx'])) $icon = "fa-file-word text-primary";
-                                                    elseif (in_array($ext, ['jpg', 'png', 'jpeg'])) $icon = "fa-file-image text-info";
+                                                if (mysqli_num_rows($stud_res) > 0) {
+                                                    while ($student = mysqli_fetch_assoc($stud_res)) {
+                                                        $mi = !empty($student['middlename']) ? substr($student['middlename'], 0, 1) . '.' : '';
+                                                        $full_name = strtoupper($student['lastname'] . ', ' . $student['firstname'] . ' ' . $mi);
+                                                        $sid = $student['student_id'];
+
+                                                        echo "<tr>";
+                                                        // Sticky Name Cell
+                                                        echo "<td class='text-left text-dark font-weight-bold sticky-name-col'>
+                                                                <i class='fas fa-user-graduate text-gray-400 mr-2'></i> $full_name
+                                                              </td>";
+
+                                                        $totalGenAvg = 0;
+                                                        $subjectCount = 0;
+                                                        $hasInc = false;
+
+                                                        // I-loop lahat ng subjects para sa grades ng isang bata
+                                                        foreach ($subjects as $sub) {
+                                                            $sub_id = $sub['subject_id'];
+                                                            $finalSubjectGrade = getFinalSubjectGrade($conn, $sid, $sub_id);
+
+                                                            if ($finalSubjectGrade === 'INC') {
+                                                                echo "<td class='grade-inc' title='Incomplete Grades'>INC</td>";
+                                                                $hasInc = true;
+                                                            } else {
+                                                                $isPassing = ($finalSubjectGrade >= 75) ? 'grade-pass text-dark' : 'grade-inc';
+                                                                echo "<td class='$isPassing'>$finalSubjectGrade</td>";
+                                                                $totalGenAvg += $finalSubjectGrade;
+                                                                $subjectCount++;
+                                                            }
+                                                        }
+
+                                                        // Kalkulahin ang General Average
+                                                        if ($hasInc || $subjectCount == 0) {
+                                                            echo "<td class='grade-inc gen-avg-cell'>INC</td>";
+                                                            echo "<td class='text-danger font-weight-bold'><i class='fas fa-times-circle'></i> Incomplete</td>";
+                                                        } else {
+                                                            $genAvg = number_format($totalGenAvg / $subjectCount, 2);
+                                                            $genClass = ($genAvg >= 75) ? 'text-primary font-weight-bolder' : 'grade-inc';
+
+                                                            $remarks = ($genAvg >= 90) ? 'Passed w/ Honors' : (($genAvg >= 75) ? 'Passed' : 'Failed');
+                                                            $remarkColor = ($genAvg >= 90) ? 'text-success' : (($genAvg >= 75) ? 'text-success' : 'text-danger');
+                                                            $icon = ($genAvg >= 75) ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>';
+
+                                                            echo "<td class='gen-avg-cell $genClass'>$genAvg</td>";
+                                                            echo "<td class='$remarkColor'>$icon $remarks</td>";
+                                                        }
+
+                                                        echo "</tr>";
+                                                    }
+                                                } else {
+                                                    // Handle pag walang students
+                                                    $colspan = count($subjects) + 3;
+                                                    echo "<tr><td colspan='$colspan' class='text-center py-4 text-muted'>No learners enrolled in your section yet.</td></tr>";
+                                                }
                                                 ?>
-                                                    <tr>
-                                                        <td class="align-middle">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="mr-3">
-                                                                    <i class="fas <?php echo $icon; ?> fa-2x"></i>
-                                                                </div>
-                                                                <div>
-                                                                    <div class="font-weight-bold text-gray-800"><?php echo $row['file_display_name']; ?></div>
-                                                                    <div class="small text-gray-500"><?php echo $row['file_path']; ?></div>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td class="align-middle">
-                                                            <?php echo date('M d, Y', strtotime($row['date_upload'])); ?><br>
-                                                            <small class="text-muted"><?php echo date('h:i A', strtotime($row['date_upload'])); ?></small>
-                                                        </td>
-                                                        <td class="text-center align-middle">
-                                                            <div class="btn-group">
-                                                                <a href="<?php echo $file_url; ?>" download class="btn btn-sm btn-light border" title="Download">
-                                                                    <i class="fas fa-download text-primary"></i>
-                                                                </a>
-                                                                <a href="?delete=<?php echo $row['file_id']; ?>" class="btn btn-sm btn-light border delete-btn" title="Delete">
-                                                                    <i class="fas fa-trash text-danger"></i>
-                                                                </a>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                <?php } ?>
                                             </tbody>
                                         </table>
                                     </div>
-                                </div>
+
+                                <?php endif; ?>
                             </div>
                         </div>
-                    </div>
+                    <?php else: ?>
+                        <div class="alert alert-info shadow-sm p-4 d-flex align-items-center">
+                            <i class="fas fa-info-circle fa-2x mr-3 text-info"></i>
+                            <div>
+                                <h5 class="alert-heading font-weight-bold mb-1">Access Restricted</h5>
+                                <p class="mb-0">The Master Grade Sheet is a consolidated view exclusively available for
+                                    <strong>Class Advisers</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                 </div>
             </div>
             <?php include './../template/footer.php'; ?>
@@ -259,47 +283,21 @@ if (isset($_GET['delete'])) {
     <a class="scroll-to-top rounded" href="#page-top"><i class="fas fa-angle-up"></i></a>
     <?php include './../template/script.php'; ?>
 
-    <?php if ($show_swal): ?>
-        <script>
-            Swal.fire({
-                icon: '<?php echo $swal_icon; ?>',
-                title: '<?php echo $swal_title; ?>',
-                timer: 2000,
-                showConfirmButton: false
-            });
-        </script>
-    <?php endif; ?>
-
     <script>
-        // Enhanced File Input Display
-        document.getElementById('customFile').addEventListener('change', function() {
-            var fileName = this.files[0].name;
-            var fileSize = (this.files[0].size / 1024 / 1024).toFixed(2); // Convert to MB
-
-            document.getElementById('fileNameDisplay').innerHTML =
-                `<strong>Selected:</strong> ${fileName} <br> <span class="badge badge-info">${fileSize} MB</span>`;
-
-            // Change color to show success
-            document.querySelector('.upload-area').style.borderColor = "#1cc88a";
-            document.querySelector('.upload-area').style.backgroundColor = "#f0fdf4";
-        });
-
-        // Delete Confirmation
-        $('.delete-btn').on('click', function(e) {
-            e.preventDefault();
-            const href = $(this).attr('href');
-            Swal.fire({
-                title: 'Delete this file?',
-                text: "This action cannot be undone.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e74a3b',
-                confirmButtonText: 'Yes, Delete it'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.location.href = href;
+        $(document).ready(function () {
+            // Enhanced DataTables for better UX
+            $('#dataTableGrades').DataTable({
+                "pageLength": 50,
+                "scrollX": true,           // Enables horizontal scrolling
+                "bLengthChange": false,    // Removes the "Show 10 entries" dropdown to keep UI clean
+                "language": {
+                    "search": "_INPUT_",
+                    "searchPlaceholder": "Search learner name..."
                 }
-            })
+            });
+
+            // Clean up the search box styling injected by DataTables
+            $('.dataTables_filter input').addClass('form-control form-control-sm');
         });
     </script>
 </body>
