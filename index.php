@@ -292,12 +292,12 @@ if (isset($_POST['changepass'])) {
             echo "<div style='display: none;'>";
             $mail = new PHPMailer(true);
             try {
-                $mail->SMTPDebug = 0; // ✅ Turn off verbose debug output
+                $mail->SMTPDebug = 0; 
                 $mail->isSMTP();
                 $mail->Host = 'smtp.gmail.com';
                 $mail->SMTPAuth = true;
                 $mail->Username = 'highschoolbangbangnational@gmail.com';
-                $mail->Password = 'njdvqtbzbgtppobe'; // ⚠️ Consider using env/config file for safety
+                $mail->Password = 'njdvqtbzbgtppobe'; 
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
                 $mail->Port = 465;
 
